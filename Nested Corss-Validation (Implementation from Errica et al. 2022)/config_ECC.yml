@@ -1,0 +1,65 @@
+#
+# Copyright (C)  2020  University of Pisa
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+model:
+  - ECC
+device:
+  - cpu
+batch_size:
+  - 32
+learning_rate:
+  - 0.1
+  - 0.01
+classifier_epochs:
+  - 1000
+optimizer:
+  - SGD
+scheduler:
+  -
+    class: ECCLR
+    args:
+      gamma: 0.1
+      step_size: 10
+loss:
+  - MulticlassClassificationLoss
+gradient_clipping:
+  - null
+early_stopper:
+  -
+    class: Patience
+    args:
+      patience: 500
+      use_loss: False
+  -
+    class: Patience
+    args:
+      patience: 500
+      use_loss: True
+shuffle:
+  - True
+l2:
+  - 0.
+dropout:
+  - 0.05
+  - 0.25
+dropout_final:
+  - 0.1
+num_layers:
+  # - 1
+  - 2
+dim_embedding:
+  - 32
+  - 64
