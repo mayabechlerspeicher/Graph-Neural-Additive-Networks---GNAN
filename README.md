@@ -18,3 +18,27 @@ Graph Neural Additive Networks (GNAN) are designed to be fully interpretable, pr
 
 # Run
 To run an experiment, set the parameters in the run.sh file , then run bash run.sh
+If you want to use GNAN for your own data or to edit it, you can copy the file GNAN.py. 
+For running time and memory optimization, we recommend using TensorGNAN for node-level tasks, and GNAN for graph-level tasks.
+
+# Explanations
+To visualize any component of GNAN, you can simply access its learned component as listed in the model definition in the GNAN.py file. You can evaluate these components on any input of interest.
+
+
+# Citing
+If you are using GNAN, please cite the following paper:
+```
+@misc{bechlerspeicher2024intelligibleeffectivegraphneural,
+      title={The Intelligible and Effective Graph Neural Additive Networks}, 
+      author={Maya Bechler-Speicher and Amir Globerson and Ran Gilad-Bachrach},
+      year={2024},
+      eprint={2406.01317},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2406.01317}, 
+}
+```
+
+# Future Work
+If you are intersted in improving and extending GNAN, please contact Maya Bechler-Speicher at mayab4 [at] mail [dot] tau  [dot] ac  [dot] il
+

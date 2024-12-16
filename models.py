@@ -300,7 +300,7 @@ class NAM(nn.Module):
         return f_sums
 
 
-class TensorGNAM(nn.Module):
+class TensorGNAN(nn.Module):
     def __init__(self, in_channels, out_channels, num_layers, hidden_channels=None, bias=True, dropout=0.0,
                  device='cpu', limited_m=True, normalize_m=True, is_graph_task=False, readout_n_layers=1,
                  final_agg='sum'):
@@ -350,7 +350,6 @@ class TensorGNAM(nn.Module):
             self.readout_nam = NAM(in_channels, out_channels, readout_n_layers, hidden_channels, bias, dropout,
                                    device)
 
-    def init_params(self):
         for name, param in self.named_parameters():
             if 'weight' in name:
                 nn.init.xavier_normal_(param, gain=self.init_std)
@@ -386,7 +385,7 @@ class TensorGNAM(nn.Module):
         return out.T
 
 
-class GNAM(nn.Module):
+class GNAN(nn.Module):
     def __init__(self, in_channels, out_channels, num_layers, hidden_channels=None, bias=True, dropout=0.0,
                  device='cpu', limited_m=True, normalize_m=True, m_per_feature=False):
         super().__init__()

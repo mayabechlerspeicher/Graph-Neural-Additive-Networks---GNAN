@@ -74,27 +74,20 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
                                    out_channels=out_dim, dropout=dropout, bias=bias)
 
 
-        elif model_name == 'gnam':
+        elif model_name == 'gnan':
             if not is_graph_task:
-                model = GNAM(in_channels=num_features,
+                model = GNAN(in_channels=num_features,
                              hidden_channels=hidden_channels, num_layers=n_layers,
                              out_channels=out_dim, dropout=dropout, bias=bias, device=device,
                              limited_m=one_m,
                              normalize_m=normalize_m)
             else:
-                model = TensorGNAM(in_channels=num_features,
+                model = TensorGNAN(in_channels=num_features,
                                    hidden_channels=hidden_channels, num_layers=n_layers,
                                    out_channels=out_dim, dropout=dropout, bias=bias, device=device,
                                    limited_m=one_m,
                                    normalize_m=normalize_m, final_agg=final_agg, is_graph_task=is_graph_task,
                                    readout_n_layers=readout_n_layers)
-
-        elif model_name == 'kangnam':
-            model = KanGNAM(in_channels=num_features,
-                            hidden_channels=hidden_channels, num_layers=n_layers,
-                            out_channels=out_dim, dropout=dropout, bias=bias, device=device,
-                            limited_m=one_m,
-                            normalize_m=normalize_m)
 
         param_size = 0
         for param in model.parameters():
@@ -332,8 +325,8 @@ if __name__ == '__main__':
                         choices=['cora', 'citeseer', 'pubmed', 'mutag', 'proteins', 'ptc_mr', 'nci1',
                                  'QM9_data_1', 'QM9_data_2', 'QM9_data_3', 'mutagenicity', 'ogb_arxiv',
                                  'tolokers'])
-    parser.add_argument('--model_name', dest='model_name', type=str, default='gnam',
-                        choices=['sage', 'gin', 'gatv2', 'graphtransformer', 'graphconv', 'gnam'])
+    parser.add_argument('--model_name', dest='model_name', type=str, default='gnan',
+                        choices=['sage', 'gin', 'gatv2', 'graphconv', 'gnan'])
     parser.add_argument('--seed', dest='seed', type=int, default=0, choices=[0, 1, 2, 3, 4, 5])
     parser.add_argument('--run_grid_search', dest='run_grid_search', type=int, default=0)
     parser.add_argument('--one_m', dest='one_m', type=int, default=0)
