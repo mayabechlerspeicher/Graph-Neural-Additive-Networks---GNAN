@@ -40,5 +40,5 @@ If you are using GNAN, please cite the following paper:
 ```
 
 # Future Work
-If you are intersted in improving and extending GNAN, please contact Maya Bechler-Speicher at mayab4 [at] mail [dot] tau  [dot] ac  [dot] il
+If you  are intersted in improving and extending GNAN, please contact Maya Bechler-Speicher at mayab4 [at] mail [dot] tau  [dot] ac  [dot] il
 
