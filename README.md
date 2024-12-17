@@ -29,21 +29,21 @@ $
 \[
 [\mathbf{h}_i]_k = \sum_{j=1}^N \frac{1}{\#\text{dist}_i(j, i)} \cdot \rho\left( \frac{1}{1 + \text{dist}(j, i)} \right) \cdot f_k\left([\mathbf{x}_j]_k\right)
 \]
-
+$
 with an activation function applied as:
-
+$
 \[
 \sigma \left( \sum_{k=1}^d [\mathbf{h}_i]_k \right),
 \]
-
+$
 leading to:
-
+$
 \[
 \to \sigma \left( \sum_{k=1}^d \sum_{j=1}^N \frac{1}{\#\text{dist}_i(j, i)} \cdot \rho\left( \frac{1}{1 + \text{dist}(j, i)} \right) \cdot f_k\left([\mathbf{x}_j]_k\right) \right)
 \]
-
+$
 which simplifies to:
-
+$
 \[
 = \sigma \left( \sum_{j=1}^N \frac{1}{\#\text{dist}_i(j, i)} \cdot \rho\left( \frac{1}{1 + \text{dist}(j, i)} \right) \cdot \sum_{k=1}^d f_k\left([\mathbf{x}_j]_k\right) \right)
 \]
