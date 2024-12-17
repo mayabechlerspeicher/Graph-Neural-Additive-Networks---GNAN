@@ -1,7 +1,7 @@
 #!/bin/bash
 
-data_name=pubmed
-model_name=gnam
+data_name=mutagenicity
+model_name=gnan
 seed=0
 num_epochs=1000
 wd=0
