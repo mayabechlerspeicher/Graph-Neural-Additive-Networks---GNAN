@@ -21,6 +21,32 @@ To run an experiment, set the parameters in the run.sh file , then run bash run.
 If you want to use GNAN for your own data or to edit it, you can copy the file GNAN.py. 
 For running time and memory optimization, we recommend using TensorGNAN for node-level tasks, and GNAN for graph-level tasks.
 
+# Note on the implementation
+Certain operations are linear and can be rearranged, allowing us to select the order that results in the most efficient implementation. This order differs from the one presented in the paper, which is optimized for readability and ease of understanding. However, it is ensured that the computations produce the same function.
+
+## Mathematical Derivation
+\[
+[\mathbf{h}_i]_k = \sum_{j=1}^N \frac{1}{\#\text{dist}_i(j, i)} \cdot \rho\left( \frac{1}{1 + \text{dist}(j, i)} \right) \cdot f_k\left([\mathbf{x}_j]_k\right)
+\]
+
+with an activation function applied as:
+
+\[
+\sigma \left( \sum_{k=1}^d [\mathbf{h}_i]_k \right),
+\]
+
+leading to:
+
+\[
+\to \sigma \left( \sum_{k=1}^d \sum_{j=1}^N \frac{1}{\#\text{dist}_i(j, i)} \cdot \rho\left( \frac{1}{1 + \text{dist}(j, i)} \right) \cdot f_k\left([\mathbf{x}_j]_k\right) \right)
+\]
+
+which simplifies to:
+
+\[
+= \sigma \left( \sum_{j=1}^N \frac{1}{\#\text{dist}_i(j, i)} \cdot \rho\left( \frac{1}{1 + \text{dist}(j, i)} \right) \cdot \sum_{k=1}^d f_k\left([\mathbf{x}_j]_k\right) \right)
+\]
+
 # Explanations
 To visualize any component of GNAN, you can simply access its learned component as listed in the model definition in the GNAN.py file. You can evaluate these components on any input of interest.
 
