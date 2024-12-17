@@ -28,7 +28,7 @@ Certain operations are linear and can be rearranged, allowing us to select the o
 
 # Explanations
 To visualize any component of GNAN, you can simply access its learned component as listed in the model definition in the GNAN.py file. You can evaluate these components on any input of interest.
-
+See for example the mutagenicity_visualizations.ipynb notebook.
 
 # Citing
 If you are using GNAN, please cite the following paper:
