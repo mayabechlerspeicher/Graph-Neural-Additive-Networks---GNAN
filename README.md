@@ -24,6 +24,7 @@ For running time and memory optimization, we recommend using TensorGNAN for node
 # Note on the implementation
 Certain operations are linear and can be rearranged, allowing us to select the order that results in the most efficient implementation. This order differs from the one presented in the paper, which is optimized for readability and ease of understanding. However, it is ensured that the computations produce the same function.
 
+![](implementation.png)
 
 # Explanations
 To visualize any component of GNAN, you can simply access its learned component as listed in the model definition in the GNAN.py file. You can evaluate these components on any input of interest.
