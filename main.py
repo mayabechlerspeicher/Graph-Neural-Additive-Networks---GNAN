@@ -10,6 +10,7 @@ import torch
 np.random.seed(0)
 seeds = np.random.randint(low=0, high=10000, size=5)
 
+
 class EarlyStopping:
     def __init__(self, metric_name, patience=3, min_is_better=False):
         self.metric_name = metric_name
@@ -40,12 +41,9 @@ class EarlyStopping:
 
 def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers, early_stop_flag, dropout, model_name,
             num_epochs, wandb_flag, wd,
-            hidden_channels, lr, bias, patience, loss_thresh, debug, data_name, unique_run_id, one_m, normalize_m,
-            is_graph_task, num_classes, final_agg, out_dim, readout_n_layers=0,
-            is_regression=False, processed_data_dir='processed_data', compute_auc=False):
-    if debug:
-        wandb_flag = False
-
+            hidden_channels, lr, bias, loss_thresh, data_name, unique_run_id, one_m, normalize_m,
+            is_graph_task, num_classes, out_dim, readout_n_layers=0,
+            is_regression=False, processed_data_dir='processed_data', compute_auc=False, patience=100):
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
@@ -56,8 +54,8 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
 
         if model_name == 'sage':
             model = GraphSAGEModel(in_channels=num_features,
-                             hidden_channels=args.hidden_channels, num_layers=args.n_layers,
-                             out_channels=out_dim)
+                                   hidden_channels=args.hidden_channels, num_layers=args.n_layers,
+                                   out_channels=out_dim)
         elif model_name == 'gin':
             model = GINModel(in_channels=num_features,
                              hidden_channels=hidden_channels, num_layers=n_layers,
@@ -86,7 +84,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
                                    hidden_channels=hidden_channels, num_layers=n_layers,
                                    out_channels=out_dim, dropout=dropout, bias=bias, device=device,
                                    limited_m=one_m,
-                                   normalize_m=normalize_m, final_agg=final_agg, is_graph_task=is_graph_task,
+                                   normalize_m=normalize_m, is_graph_task=is_graph_task,
                                    readout_n_layers=readout_n_layers)
 
         param_size = 0
@@ -98,8 +96,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
 
         size_all_mb = (param_size + buffer_size) / 1024 ** 2
         print('model size: {:.3f}MB'.format(size_all_mb))
-        if wandb_flag:
-            wandb.log({'model_size': size_all_mb})
+
         model.to(device)
         config = {
             'lr': lr,
@@ -112,7 +109,6 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             'model': model.__class__.__name__,
             'device': device.type,
             'loss_thresh': loss_thresh,
-            'debug': debug,
             'wd': wd,
             'bias': bias,
             'dropout': dropout,
@@ -127,7 +123,6 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             'is_graph_task': is_graph_task,
             'num_classes': num_classes,
             'readout_n_layers': readout_n_layers,
-            'final_agg': final_agg,
             'cross_val': 'yes' if is_graph_task else 'no',
             'fixed_normalization': True,
             'is_regression': is_regression,
@@ -315,7 +310,7 @@ if __name__ == '__main__':
     parser.add_argument('--hidden_channels', dest='hidden_channels', type=int, default=64)
     parser.add_argument('--n_layers', dest='n_layers', type=int, default=3)
     parser.add_argument('--num_epochs', dest='num_epochs', type=int, default=1000)
-    parser.add_argument('--wandb_flag', dest='wandb_flag', type=int, default=1)
+    parser.add_argument('--wandb_flag', dest='wandb_flag', type=int, default=0)
     parser.add_argument('--bias', dest='bias', type=int, default=1)
     parser.add_argument('--dropout', dest='dropout', type=float, default=0.0)
     parser.add_argument('--early_stop', dest='early_stop', type=int, default=0)
@@ -356,9 +351,9 @@ if __name__ == '__main__':
             n_layers=args.n_layers, early_stop_flag=args.early_stop, dropout=args.dropout,
             model_name=args.model_name,
             num_epochs=args.num_epochs, wandb_flag=args.wandb_flag, wd=args.wd,
-            hidden_channels=args.hidden_channels, lr=args.lr, bias=args.bias, patience=args.patience,
-            debug=args.debug, loss_thresh=loss_thresh, seeds=seeds, data_name=args.data_name,
+            hidden_channels=args.hidden_channels, lr=args.lr, bias=args.bias, loss_thresh=loss_thresh, seeds=seeds,
+            data_name=args.data_name,
             unique_run_id=unique_run_id, one_m=args.one_m, normalize_m=args.normalize_m,
-            is_graph_task=is_graph_task, num_classes=num_classes,
-            final_agg=args.final_agg, readout_n_layers=args.readout_n_layers, out_dim=out_dim , is_regression=is_regression, processed_data_dir=args.processed_data_dir,
+            is_graph_task=is_graph_task, num_classes=num_classes, readout_n_layers=args.readout_n_layers,
+            out_dim=out_dim, is_regression=is_regression, processed_data_dir=args.processed_data_dir,
             compute_auc=compute_auc)

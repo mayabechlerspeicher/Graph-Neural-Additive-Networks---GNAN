@@ -352,7 +352,7 @@ class TensorGNAN(nn.Module):
 
         for name, param in self.named_parameters():
             if 'weight' in name:
-                nn.init.xavier_normal_(param, gain=self.init_std)
+                nn.init.xavier_normal_(param, gain=0.01)
             elif 'bias' in name:
                 nn.init.constant_(param, 0)
 
