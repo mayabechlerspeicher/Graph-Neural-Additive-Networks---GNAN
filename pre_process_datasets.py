@@ -142,5 +142,7 @@ def pre_process(data, is_graph_task, data_name, processed_data_dir='processed_da
         data.normalization_matrix = normalization_matrix
 
     if not os.path.exists(f'{processed_data_dir}/{data_name}.pt'):
+        if not os.path.exists(processed_data_dir):
+            os.makedirs(processed_data_dir)
         torch.save(data, f'{processed_data_dir}/{data_name}.pt')
         print(f'Saved preprocessed {data_name} dataset')
