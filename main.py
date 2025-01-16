@@ -41,7 +41,7 @@ class EarlyStopping:
 def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers, early_stop_flag, dropout, model_name,
             num_epochs, wandb_flag, wd,
             hidden_channels, lr, bias, patience, loss_thresh, debug, data_name, unique_run_id, one_m, normalize_m,
-            is_graph_task, num_classes, final_agg, out_dim, readout_n_layers=0, is_for_plot=False,
+            is_graph_task, num_classes, final_agg, out_dim, readout_n_layers=0,
             is_regression=False, processed_data_dir='processed_data', compute_auc=False):
     if debug:
         wandb_flag = False
@@ -129,7 +129,6 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             'readout_n_layers': readout_n_layers,
             'final_agg': final_agg,
             'cross_val': 'yes' if is_graph_task else 'no',
-            'is_for_plot': is_for_plot,
             'fixed_normalization': True,
             'is_regression': is_regression,
             'processed_data_dir': processed_data_dir,
@@ -321,7 +320,7 @@ if __name__ == '__main__':
     parser.add_argument('--dropout', dest='dropout', type=float, default=0.0)
     parser.add_argument('--early_stop', dest='early_stop', type=int, default=0)
     parser.add_argument('--wd', dest='wd', type=float, default=0.00005)
-    parser.add_argument('--data_name', dest='data_name', type=str, default='cora',
+    parser.add_argument('--data_name', dest='data_name', type=str,
                         choices=['cora', 'citeseer', 'pubmed', 'mutag', 'proteins', 'ptc_mr', 'nci1',
                                  'QM9_data_1', 'QM9_data_2', 'QM9_data_3', 'mutagenicity', 'ogb_arxiv',
                                  'tolokers'])
@@ -329,7 +328,7 @@ if __name__ == '__main__':
                         choices=['sage', 'gin', 'gatv2', 'graphconv', 'gnan'])
     parser.add_argument('--seed', dest='seed', type=int, default=0, choices=[0, 1, 2, 3, 4, 5])
     parser.add_argument('--run_grid_search', dest='run_grid_search', type=int, default=0)
-    parser.add_argument('--one_m', dest='one_m', type=int, default=0)
+    parser.add_argument('--one_m', dest='one_m', type=int, default=1)
     parser.add_argument('--normalize_m', dest='normalize_m', type=int, default=1)
     parser.add_argument('--readout_n_layers', dest='readout_n_layers', type=int, default=0)
     parser.add_argument('--processed_data_dir', dest='processed_data_dir', type=str, default='processed_data')
@@ -361,6 +360,5 @@ if __name__ == '__main__':
             debug=args.debug, loss_thresh=loss_thresh, seeds=seeds, data_name=args.data_name,
             unique_run_id=unique_run_id, one_m=args.one_m, normalize_m=args.normalize_m,
             is_graph_task=is_graph_task, num_classes=num_classes,
-            final_agg=args.final_agg, readout_n_layers=args.readout_n_layers, out_dim=out_dim,
-            is_for_plot=args.is_for_plot, is_regression=is_regression, processed_data_dir=args.processed_data_dir,
+            final_agg=args.final_agg, readout_n_layers=args.readout_n_layers, out_dim=out_dim , is_regression=is_regression, processed_data_dir=args.processed_data_dir,
             compute_auc=compute_auc)
