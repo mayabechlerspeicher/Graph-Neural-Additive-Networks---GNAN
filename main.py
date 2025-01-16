@@ -6,6 +6,7 @@ import datasets
 import uuid
 import numpy as np
 import torch
+import os
 
 np.random.seed(0)
 seeds = np.random.randint(low=0, high=10000, size=5)
@@ -166,6 +167,8 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             if compute_auc:
                 if val_auc > best_val_acc_model_val_auc:
                     best_val_acc_model_val_auc = val_auc
+                    if not os.path.exists('models'):
+                        os.makedirs(f'models')
                     torch.save(model.state_dict(),
                                f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_auc.pt')
                     best_val_auc_epoch = epoch
@@ -195,6 +198,8 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             else:
                 if val_acc > best_val_acc_model_val_acc:
                     best_val_acc_model_val_acc = val_loss
+                    if not os.path.exists('models'):
+                        os.makedirs(f'models')
                     torch.save(model.state_dict(),
                                f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_val_acc.pt')
                     best_val_acc_epoch = epoch
@@ -226,7 +231,8 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
 
             if train_loss < best_train_loss_model_train_loss:
                 best_train_loss_model_train_loss = train_loss
-                # best_train_loss_model_params = deepcopy(model.state_dict())
+                if not os.path.exists('models'):
+                    os.makedirs(f'models')
                 torch.save(model.state_dict(),
                            f'models/{unique_run_id}_{data_name}_{model_name}_{seed}_best_train_loss.pt')
                 best_train_loss_epoch = epoch
