@@ -301,50 +301,49 @@ class NAM(nn.Module):
 
 
 class TensorGNAN(nn.Module):
-    def __init__(self, in_channels, out_channels, num_layers, hidden_channels=None, bias=True, dropout=0.0,
-                 device='cpu', limited_m=True, normalize_m=True, is_graph_task=False, readout_n_layers=1,
-                 final_agg='sum'):
+    def __init__(self, in_channels, out_channels, n_layers, hidden_channels=None, bias=True, dropout=0.0,
+                 device='cpu', rho_per_feature=False, normalize_rho=True, is_graph_task=False, readout_n_layers=1):
         super().__init__()
 
         self.device = device
         self.out_channels = out_channels
         self.hidden_channels = hidden_channels
-        self.num_layers = num_layers
+        self.n_layers = n_layers
         self.bias = bias
         self.dropout = dropout
-        self.limited_m = limited_m
-        self.normalize_m = normalize_m
+        self.rho_per_feature = rho_per_feature
+        self.normalize_rho = normalize_rho
         self.fs = nn.ModuleList()
         self.is_graph_task = is_graph_task
         self.readout_n_layers = readout_n_layers
 
         self.actual_output_dim_f = 1 if is_graph_task and readout_n_layers > 0 else out_channels
-        self.actual_output_dim_m = 1 if limited_m or (is_graph_task and readout_n_layers > 0) else out_channels
+        self.actual_output_dim_rho = 1 if not rho_per_feature or (is_graph_task and readout_n_layers > 0) else out_channels
 
         for _ in range(in_channels):
-            if num_layers == 1:
+            if n_layers == 1:
                 curr_f = [nn.Linear(1, self.actual_output_dim_f, bias=bias)]
             else:
                 curr_f = [nn.Linear(1, hidden_channels, bias=bias), nn.ReLU(), nn.Dropout(p=dropout)]
-                for _ in range(1, num_layers - 1):
+                for _ in range(1, n_layers - 1):
                     curr_f.append(nn.Linear(hidden_channels, hidden_channels, bias=bias))
                     curr_f.append(nn.ReLU())
                     curr_f.append(nn.Dropout(p=dropout))
                 curr_f.append(nn.Linear(hidden_channels, self.actual_output_dim_f, bias=bias))
             self.fs.append(nn.Sequential(*curr_f))
 
-        m_bias = True
-        if is_graph_task:  m_bias = False
-        if num_layers == 1:
-            self.m = [nn.Linear(1, self.actual_output_dim_m, bias=m_bias)]
+        rho_bias = True
+        if is_graph_task:  rho_bias = False
+        if n_layers == 1:
+            self.rho = [nn.Linear(1, self.actual_output_dim_rho, bias=rho_bias)]
 
         else:
-            self.m = [nn.Linear(1, hidden_channels, bias=m_bias), nn.ReLU()]
-            for _ in range(1, num_layers - 1):
-                self.m.append(nn.Linear(hidden_channels, hidden_channels, bias=m_bias))
-                self.m.append(nn.ReLU())
-            self.m.append(nn.Linear(hidden_channels, self.actual_output_dim_m, bias=m_bias))
-        self.m = nn.Sequential(*self.m)
+            self.rho = [nn.Linear(1, hidden_channels, bias=rho_bias), nn.ReLU()]
+            for _ in range(1, n_layers - 1):
+                self.rho.append(nn.Linear(hidden_channels, hidden_channels, bias=rho_bias))
+                self.rho.append(nn.ReLU())
+            self.rho.append(nn.Linear(hidden_channels, self.actual_output_dim_rho, bias=rho_bias))
+        self.rho = nn.Sequential(*self.rho)
 
         if is_graph_task and self.readout_n_layers > 0:
             self.readout_nam = NAM(in_channels, out_channels, readout_n_layers, hidden_channels, bias, dropout,
@@ -366,9 +365,9 @@ class TensorGNAN(nn.Module):
             fx[:, feature_index] = feature_col
 
         fx_perm = torch.permute(fx, (2, 0, 1))
-        if self.normalize_m:
+        if self.normalize_rho:
             node_distances = torch.div(node_distances, inputs.normalization_matrix)
-        m_dist = self.m(node_distances.flatten().view(-1, 1)).view(x.size(0), x.size(0), self.actual_output_dim_m)
+        m_dist = self.rho(node_distances.flatten().view(-1, 1)).view(x.size(0), x.size(0), self.actual_output_dim_rho)
         m_dist_perm = torch.permute(m_dist, (2, 0, 1))
 
         mf = torch.matmul(m_dist_perm, fx_perm)
@@ -387,7 +386,7 @@ class TensorGNAN(nn.Module):
 
 class GNAN(nn.Module):
     def __init__(self, in_channels, out_channels, num_layers, hidden_channels=None, bias=True, dropout=0.0,
-                 device='cpu', limited_m=True, normalize_m=True, m_per_feature=False):
+                 device='cpu', normalize_rho=True, rho_per_feature=False):
         super().__init__()
 
         self.device = device
@@ -396,8 +395,8 @@ class GNAN(nn.Module):
         self.num_layers = num_layers
         self.bias = bias
         self.dropout = dropout
-        self.limited_m = limited_m
-        self.normalize_m = normalize_m
+        self.rho_per_feature = rho_per_feature
+        self.normalize_rho = normalize_rho
         self.fs = nn.ModuleList()
 
         for _ in range(in_channels):
@@ -411,36 +410,36 @@ class GNAN(nn.Module):
                     curr_f.append(nn.Dropout(p=dropout))
                 curr_f.append(nn.Linear(hidden_channels, out_channels, bias=bias))
             self.fs.append(nn.Sequential(*curr_f))
-        if m_per_feature:
-            self.ms = nn.ModuleList()
+        if rho_per_feature:
+            self.rhos = nn.ModuleList()
             for _ in range(in_channels):
                 if num_layers == 1:
-                    self.m = [nn.Linear(1, out_channels, bias=bias)]
+                    self.rho = [nn.Linear(1, out_channels, bias=bias)]
                 else:
-                    self.m = [nn.Linear(1, hidden_channels, bias=bias), nn.ReLU()]
+                    self.rho = [nn.Linear(1, hidden_channels, bias=bias), nn.ReLU()]
                     for _ in range(1, num_layers - 1):
-                        self.m.append(nn.Linear(hidden_channels, hidden_channels, bias=bias))
-                        self.m.append(nn.ReLU())
-                    if limited_m:
-                        self.m.append(nn.Linear(hidden_channels, 1, bias=bias))
+                        self.rho.append(nn.Linear(hidden_channels, hidden_channels, bias=bias))
+                        self.rho.append(nn.ReLU())
+                    if not rho_per_feature:
+                        self.rho.append(nn.Linear(hidden_channels, 1, bias=bias))
                     else:
-                        self.m.append(nn.Linear(hidden_channels, out_channels, bias=bias))
+                        self.rho.append(nn.Linear(hidden_channels, out_channels, bias=bias))
 
-                self.ms.append(nn.Sequential(*self.m))
+                self.rhos.append(nn.Sequential(*self.rho))
         else:
             if num_layers == 1:
-                self.m = [nn.Linear(1, out_channels, bias=bias)]
+                self.rho = [nn.Linear(1, out_channels, bias=bias)]
             else:
-                self.m = [nn.Linear(1, hidden_channels, bias=bias), nn.ReLU()]
+                self.rho = [nn.Linear(1, hidden_channels, bias=bias), nn.ReLU()]
                 for _ in range(1, num_layers - 1):
-                    self.m.append(nn.Linear(hidden_channels, hidden_channels, bias=bias))
-                    self.m.append(nn.ReLU())
-                if limited_m:
-                    self.m.append(nn.Linear(hidden_channels, 1, bias=bias))
+                    self.rho.append(nn.Linear(hidden_channels, hidden_channels, bias=bias))
+                    self.rho.append(nn.ReLU())
+                if not rho_per_feature:
+                    self.rho.append(nn.Linear(hidden_channels, 1, bias=bias))
                 else:
-                    self.m.append(nn.Linear(hidden_channels, out_channels, bias=bias))
+                    self.rho.append(nn.Linear(hidden_channels, out_channels, bias=bias))
 
-            self.m = nn.Sequential(*self.m)
+        self.rho = nn.Sequential(*self.rho)
 
     def init_params(self):
         for name, param in self.named_parameters():
@@ -465,18 +464,18 @@ class GNAN(nn.Module):
         for j, node in enumerate(node_ids):
             node_dists = node_distances[node]
             normalization = inputs.normalization_matrix[node]
-            m_dist = self.m(node_dists.view(-1, 1))
-            if self.normalize_m:
-                if m_dist.size(1) == 1:
-                    m_dist = torch.div(m_dist, normalization.view(-1, 1))
+            rho_dist = self.rho(node_dists.view(-1, 1))
+            if self.normalize_rho:
+                if rho_dist.size(1) == 1:
+                    rho_dist = torch.div(rho_dist, normalization.view(-1, 1))
                 else:
-                    for i in range(m_dist.size(1)):  # iterate number of classes
-                        m_dist[:, i] = torch.div(m_dist[:, i], normalization)
-            pred_for_node = torch.sum(torch.mul(m_dist, f_sums), dim=0)
+                    for i in range(rho_dist.size(1)):  # iterate number of classes
+                        rho_dist[:, i] = torch.div(rho_dist[:, i], normalization)
+            pred_for_node = torch.sum(torch.mul(rho_dist, f_sums), dim=0)
             stacked_results[j] = pred_for_node.view(1, -1)
 
         return stacked_results
 
-    def print_m_params(self):
-        for name, param in self.m.named_parameters():
+    def print_rho_params(self):
+        for name, param in self.rho.named_parameters():
             print(name, param)

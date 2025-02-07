@@ -6,6 +6,7 @@ import datasets
 import uuid
 import numpy as np
 import torch
+import math
 import os
 
 np.random.seed(0)
@@ -42,7 +43,7 @@ class EarlyStopping:
 
 def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers, early_stop_flag, dropout, model_name,
             num_epochs, wandb_flag, wd,
-            hidden_channels, lr, bias, loss_thresh, data_name, unique_run_id, one_m, normalize_m,
+            hidden_channels, lr, loss_thresh, data_name, unique_run_id, rho_per_feature, normalize_m,
             is_graph_task, num_classes, out_dim, readout_n_layers=0,
             is_regression=False, processed_data_dir='processed_data', compute_auc=False, patience=100):
     if torch.cuda.is_available():
@@ -60,32 +61,32 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
         elif model_name == 'gin':
             model = GINModel(in_channels=num_features,
                              hidden_channels=hidden_channels, num_layers=n_layers,
-                             out_channels=out_dim, dropout=dropout, bias=bias)
+                             out_channels=out_dim, dropout=dropout)
 
         elif model_name == 'gatv2':
             model = GATv2Model(in_channels=num_features,
                                hidden_channels=hidden_channels, num_layers=n_layers,
-                               out_channels=out_dim, dropout=dropout, bias=bias)
+                               out_channels=out_dim, dropout=dropout)
 
         elif model_name == 'graphconv':
             model = GraphConvModel(in_channels=num_features,
                                    hidden_channels=hidden_channels, num_layers=n_layers,
-                                   out_channels=out_dim, dropout=dropout, bias=bias)
+                                   out_channels=out_dim, dropout=dropout)
 
 
         elif model_name == 'gnan':
             if not is_graph_task:
                 model = GNAN(in_channels=num_features,
                              hidden_channels=hidden_channels, num_layers=n_layers,
-                             out_channels=out_dim, dropout=dropout, bias=bias, device=device,
-                             limited_m=one_m,
-                             normalize_m=normalize_m)
+                             out_channels=out_dim, dropout=dropout, device=device,
+                             rho_per_feature=rho_per_feature,
+                             normalize_rho=normalize_m)
             else:
                 model = TensorGNAN(in_channels=num_features,
-                                   hidden_channels=hidden_channels, num_layers=n_layers,
-                                   out_channels=out_dim, dropout=dropout, bias=bias, device=device,
-                                   limited_m=one_m,
-                                   normalize_m=normalize_m, is_graph_task=is_graph_task,
+                                   hidden_channels=hidden_channels, n_layers=n_layers,
+                                   out_channels=out_dim, dropout=dropout, device=device,
+                                   rho_per_feature=rho_per_feature,
+                                   normalize_rho=normalize_m, is_graph_task=is_graph_task,
                                    readout_n_layers=readout_n_layers)
 
         param_size = 0
@@ -111,14 +112,13 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
             'device': device.type,
             'loss_thresh': loss_thresh,
             'wd': wd,
-            'bias': bias,
             'dropout': dropout,
             'seed': seed,
             'data_name': data_name,
             'unique_run_id': unique_run_id,
             'early_stop_flag': early_stop_flag,
             'num_features': num_features,
-            'limited_m': one_m,
+            'rho_per_feature': rho_per_feature,
             'normalize_m': normalize_m,
             'seed index ': i,
             'is_graph_task': is_graph_task,
@@ -133,7 +133,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
         for name, val in config.items():
             print(f'{name}: {val}')
         if wandb_flag:
-            exp_name = f'GNAM_{model.__class__.__name__}_{data_name}'
+            exp_name = f'GNAN_{model.__class__.__name__}_{data_name}'
             wandb.init(project='GNAM', reinit=True, entity='GNAN',
                        settings=wandb.Settings(start_method='thread'),
                        config=config, name=exp_name)
@@ -143,7 +143,7 @@ def run_exp(train_loader, val_loader, test_loader, num_features, seeds, n_layers
         early_stop = EarlyStopping(metric_name='Loss', patience=patience, min_is_better=True)
         best_val_acc_model_val_acc = 0
         best_val_acc_model_val_auc = 0
-        best_train_loss_model_train_loss = 1000000
+        best_train_loss_model_train_loss = math.inf
 
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
@@ -317,7 +317,6 @@ if __name__ == '__main__':
     parser.add_argument('--n_layers', dest='n_layers', type=int, default=3)
     parser.add_argument('--num_epochs', dest='num_epochs', type=int, default=1000)
     parser.add_argument('--wandb_flag', dest='wandb_flag', type=int, default=0)
-    parser.add_argument('--bias', dest='bias', type=int, default=1)
     parser.add_argument('--dropout', dest='dropout', type=float, default=0.0)
     parser.add_argument('--early_stop', dest='early_stop', type=int, default=0)
     parser.add_argument('--wd', dest='wd', type=float, default=0.00005)
@@ -329,7 +328,7 @@ if __name__ == '__main__':
                         choices=['sage', 'gin', 'gatv2', 'graphconv', 'gnan'])
     parser.add_argument('--seed', dest='seed', type=int, default=0, choices=[0, 1, 2, 3, 4, 5])
     parser.add_argument('--run_grid_search', dest='run_grid_search', type=int, default=0)
-    parser.add_argument('--one_m', dest='one_m', type=int, default=1)
+    parser.add_argument('--rho_per_feature', dest='rho_per_feature', type=int, default=0)
     parser.add_argument('--normalize_m', dest='normalize_m', type=int, default=1)
     parser.add_argument('--readout_n_layers', dest='readout_n_layers', type=int, default=0)
     parser.add_argument('--processed_data_dir', dest='processed_data_dir', type=str, default='processed_data')
@@ -357,9 +356,9 @@ if __name__ == '__main__':
             n_layers=args.n_layers, early_stop_flag=args.early_stop, dropout=args.dropout,
             model_name=args.model_name,
             num_epochs=args.num_epochs, wandb_flag=args.wandb_flag, wd=args.wd,
-            hidden_channels=args.hidden_channels, lr=args.lr, bias=args.bias, loss_thresh=loss_thresh, seeds=seeds,
+            hidden_channels=args.hidden_channels, lr=args.lr, loss_thresh=loss_thresh, seeds=seeds,
             data_name=args.data_name,
-            unique_run_id=unique_run_id, one_m=args.one_m, normalize_m=args.normalize_m,
+            unique_run_id=unique_run_id, rho_per_feature=args.rho_per_feature, normalize_m=args.normalize_m,
             is_graph_task=is_graph_task, num_classes=num_classes, readout_n_layers=args.readout_n_layers,
             out_dim=out_dim, is_regression=is_regression, processed_data_dir=args.processed_data_dir,
             compute_auc=compute_auc)
