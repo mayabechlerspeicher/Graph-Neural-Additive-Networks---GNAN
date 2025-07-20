@@ -155,7 +155,7 @@ class GraphConvModel(nn.Module):
 class GraphTranformerModel(nn.Module):
     def __init__(self, in_channels, out_channels, num_layers, hidden_channels=None,
                  bias=True, dropout=0.0, graph_level_task=False):
-        super(GraphSAGEModel, self).__init__()
+        super(GraphTranformerModel, self).__init__()
 
         self.out_channels = out_channels
         self.hidden_channels = hidden_channels
@@ -365,9 +365,9 @@ class TensorGNAN(nn.Module):
             fx[:, feature_index] = feature_col
 
         fx_perm = torch.permute(fx, (2, 0, 1))
-        if self.normalize_rho:
-            node_distances = torch.div(node_distances, inputs.normalization_matrix)
         m_dist = self.rho(node_distances.flatten().view(-1, 1)).view(x.size(0), x.size(0), self.actual_output_dim_rho)
+        if self.normalize_rho:
+            m_dist = torch.div(m_dist, inputs.normalization_matrix.unsqueeze(-1))
         m_dist_perm = torch.permute(m_dist, (2, 0, 1))
 
         mf = torch.matmul(m_dist_perm, fx_perm)
